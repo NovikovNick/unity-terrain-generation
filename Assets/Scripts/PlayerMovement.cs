@@ -27,9 +27,21 @@ public class PlayerMovement : MonoBehaviour
         bool hasHorizontalInput = !Mathf.Approximately(horizontal, 0f);
         bool hasVerticalInput = !Mathf.Approximately(vertical, 0f);
 
-        bool isWalking = hasHorizontalInput || hasVerticalInput;
-        m_Animator.SetBool("IsWalking", isWalking);
+        bool isMoving = hasHorizontalInput || hasVerticalInput;
+        bool isRunning = Input.GetKey(KeyCode.LeftShift);
 
+
+        if (isMoving)
+        {
+            if(isRunning)
+            {
+                m_Animator.SetBool("IsWalking", isMoving);
+            } else
+            {
+                m_Animator.SetBool("IsRunning", isRunning);
+            }
+
+        }
 
         Vector3 desiredForward = Vector3.RotateTowards(transform.forward, m_Movement, turnSpeed * Time.deltaTime, 0f);
         m_Rotation = Quaternion.LookRotation(desiredForward);
@@ -39,7 +51,7 @@ public class PlayerMovement : MonoBehaviour
 
     void OnAnimatorMove()
     {
-        m_Rigidbody.MovePosition(m_Rigidbody.position + m_Movement / 10 /*m_Animator.deltaPosition.magnitude*/);
+        m_Rigidbody.MovePosition(m_Rigidbody.position + m_Movement * m_Animator.deltaPosition.magnitude);
         m_Rigidbody.MoveRotation(m_Rotation);
     }
 }
