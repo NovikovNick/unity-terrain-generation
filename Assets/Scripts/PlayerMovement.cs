@@ -1,57 +1,63 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    public float turnSpeed = 20f;
-    Animator m_Animator;
-    Vector3 m_Movement;
-    Quaternion m_Rotation = Quaternion.identity;
-    Rigidbody m_Rigidbody;
 
-    // Start is called before the first frame update
+
+    public Text text;
+
+    public float walkSpeed = 2;
+    public float runSpeed = 6;
+
+    public float turnSmoothTime = 0.2f;
+    float turnSmoothVelocity;
+
+    public float speedSmoothTime = 0.1f;
+    float speedSmoothVelocity;
+    float currentSpeed;
+
+    Animator animator;
+    Transform cameraT;
+
     void Start()
     {
-        m_Animator = GetComponent<Animator>();
-        m_Rigidbody = GetComponent<Rigidbody>();
+        animator = GetComponent<Animator>();
+        cameraT = Camera.main.transform;
     }
 
-    void FixedUpdate()
+    void Update()
     {
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
-        m_Movement.Set(horizontal, 0f, vertical);
-        m_Movement.Normalize();
-        
-        bool hasHorizontalInput = !Mathf.Approximately(horizontal, 0f);
-        bool hasVerticalInput = !Mathf.Approximately(vertical, 0f);
 
-        bool isMoving = hasHorizontalInput || hasVerticalInput;
-        bool isRunning = Input.GetKey(KeyCode.LeftShift);
+        Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+        Vector2 inputDir = input.normalized;
 
-
-        if (isMoving)
+        if (inputDir != Vector2.zero)
         {
-            if(isRunning)
-            {
-                m_Animator.SetBool("IsWalking", isMoving);
-            } else
-            {
-                m_Animator.SetBool("IsRunning", isRunning);
-            }
-
+            float targetRotation = Mathf.Atan2(inputDir.x, inputDir.y) * Mathf.Rad2Deg + cameraT.eulerAngles.y;
+            transform.eulerAngles = Vector3.up * Mathf.SmoothDampAngle(transform.eulerAngles.y, targetRotation, ref turnSmoothVelocity, turnSmoothTime);
         }
 
-        Vector3 desiredForward = Vector3.RotateTowards(transform.forward, m_Movement, turnSpeed * Time.deltaTime, 0f);
-        m_Rotation = Quaternion.LookRotation(desiredForward);
+        bool running = Input.GetKey(KeyCode.LeftShift);
+        float targetSpeed = ((running) ? runSpeed : walkSpeed) * inputDir.magnitude;
+        currentSpeed = Mathf.SmoothDamp(currentSpeed, targetSpeed, ref speedSmoothVelocity, speedSmoothTime);
 
-       
-    }
+        transform.Translate(transform.forward * currentSpeed * Time.deltaTime, Space.World);
 
-    void OnAnimatorMove()
-    {
-        m_Rigidbody.MovePosition(m_Rigidbody.position + m_Movement * m_Animator.deltaPosition.magnitude);
-        m_Rigidbody.MoveRotation(m_Rotation);
+        float animationSpeedPercent = ((running) ? 1 : .5f) * inputDir.magnitude;
+        animator.SetFloat("speedPercent", animationSpeedPercent, speedSmoothTime, Time.deltaTime);
+
+
+        text.text =
+              "input: " + input.ToString() + "\n"
+            + "inputDir: " + inputDir.ToString() + "\n"
+            + "speedPercent: " + animationSpeedPercent.ToString() + "\n"
+            + "speedSmoothTime: " + speedSmoothTime.ToString() + "\n"
+            + "currentSpeed: " + currentSpeed.ToString() + "\n"
+            + "transform.up: " + transform.up + "\n"
+            + "transform.forward: " + transform.forward + "\n"
+            ;
     }
 }
