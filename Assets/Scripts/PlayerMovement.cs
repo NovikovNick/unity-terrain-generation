@@ -6,9 +6,6 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
 
-
-    public Text text;
-
     public float walkSpeed = 2;
     public float runSpeed = 6;
 
@@ -42,22 +39,30 @@ public class PlayerMovement : MonoBehaviour
 
         bool running = Input.GetKey(KeyCode.LeftShift);
         float targetSpeed = ((running) ? runSpeed : walkSpeed) * inputDir.magnitude;
-        currentSpeed = Mathf.SmoothDamp(currentSpeed, targetSpeed, ref speedSmoothVelocity, speedSmoothTime);
 
-        transform.Translate(transform.forward * currentSpeed * Time.deltaTime, Space.World);
+        //transform.Translate(transform.forward * targetSpeed * Time.deltaTime, Space.World);
+        
+        PlayerSnapshot snapshot;
+        if (NetworkManager.Instance.snapshots.TryDequeue(out snapshot))
+        {
+            transform.position = snapshot.position;
 
-        float animationSpeedPercent = ((running) ? 1 : .5f) * inputDir.magnitude;
-        animator.SetFloat("speedPercent", animationSpeedPercent, speedSmoothTime, Time.deltaTime);
+            PlayerRequest request;
+            if (NetworkManager.Instance.requests.TryPeek(out request))
+            {
+                while (request.datagramNumber <= snapshot.lastDatagramNumber)
+                {
+                    NetworkManager.Instance.requests.TryDequeue(out request);
+                }
 
+                transform.Translate(request.direction * targetSpeed * 1 / 30, Space.World);
+                float animationSpeedPercent = ((running) ? 1 : .5f) * inputDir.magnitude;
+                animator.SetFloat("speedPercent", animationSpeedPercent);
+            }
 
-        text.text =
-              "input: " + input.ToString() + "\n"
-            + "inputDir: " + inputDir.ToString() + "\n"
-            + "speedPercent: " + animationSpeedPercent.ToString() + "\n"
-            + "speedSmoothTime: " + speedSmoothTime.ToString() + "\n"
-            + "currentSpeed: " + currentSpeed.ToString() + "\n"
-            + "transform.up: " + transform.up + "\n"
-            + "transform.forward: " + transform.forward + "\n"
-            ;
+            
+        }
+        
+        NetworkManager.Instance.ChangePlayerPosition(transform.forward, inputDir.magnitude, running);
     }
 }
