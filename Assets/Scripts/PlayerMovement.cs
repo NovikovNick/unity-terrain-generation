@@ -20,10 +20,15 @@ public class PlayerMovement : MonoBehaviour
     Animator animator;
     Transform cameraT;
 
+    GameObject capsule;
+
     void Start()
     {
         animator = GetComponent<Animator>();
         cameraT = Camera.main.transform;
+
+        capsule = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+
     }
 
     void Update()
@@ -50,8 +55,9 @@ public class PlayerMovement : MonoBehaviour
         PlayerSnapshot snapshot = NetworkManager.Instance.snapshot;
         if (snapshot != null)
         {
-            Vector3 newPosition = new Vector3(snapshot.position.x, snapshot.position.y, snapshot.position.z);
+            // Client-side prediction
 
+            Vector3 newPosition = new Vector3(snapshot.player.position.x, snapshot.player.position.y, snapshot.player.position.z);
             PlayerRequest request;
             if (NetworkManager.Instance.requests.TryPeek(out request))
             {
@@ -61,7 +67,7 @@ public class PlayerMovement : MonoBehaviour
                     NetworkManager.Instance.requests.TryDequeue(out request);
                     
                 }
-                
+
                 foreach (PlayerRequest r in new List<PlayerRequest>(NetworkManager.Instance.requests))
                 {
                     float speed = ((r.isRunning) ? runSpeed : walkSpeed);
@@ -75,6 +81,19 @@ public class PlayerMovement : MonoBehaviour
                 }
                 transform.position = newPosition;
             }
+
+            // other players
+            PlayerSnapshot previousSnapshot = NetworkManager.Instance.previousSnapshot;
+            if (previousSnapshot != null && snapshot.otherPlayers.Count > 0)
+            {
+                float interval = snapshot.timestamp - previousSnapshot.timestamp;
+                float elapsed  = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - NetworkManager.Instance.updatedAt;
+                float t = elapsed / interval;
+
+                Vector3 pos = Vector3.Lerp(previousSnapshot.otherPlayers[0].position, snapshot.otherPlayers[0].position, t);
+                capsule.transform.position = pos;
+            }
+            
         }
     }
 

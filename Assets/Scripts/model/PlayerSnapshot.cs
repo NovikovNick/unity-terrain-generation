@@ -6,16 +6,14 @@ using UnityEngine;
 [System.Serializable]
 public class PlayerSnapshot
 {
-
+    public long timestamp;
     public int lastDatagramNumber;
 
-    public byte playerId;
-    public Vector3 position;
-    public Vector3 direction;
-
+    public ServerGameObject player;
+    public List<ServerGameObject> otherPlayers;
 
     public override string ToString()
     {
-        return "PlayerSnapshot: lastDatagramNumber=" + lastDatagramNumber + ", position=" +  position;
+        return "PlayerSnapshot: lastDatagramNumber=" + lastDatagramNumber;
     }
 }

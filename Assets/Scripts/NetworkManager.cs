@@ -18,10 +18,9 @@ public class NetworkManager : Singleton<NetworkManager>
     IPEndPoint hostEndPoint;
 
     int datagramNumber = 0;
-
-
+    public long updatedAt;
+    public PlayerSnapshot previousSnapshot;
     public PlayerSnapshot snapshot;
-    // public ConcurrentQueue<PlayerSnapshot> snapshots = new ConcurrentQueue<PlayerSnapshot>();
     public ConcurrentQueue<PlayerRequest> requests = new ConcurrentQueue<PlayerRequest>();
 
     #endregion
@@ -47,7 +46,9 @@ public class NetworkManager : Singleton<NetworkManager>
             string json = System.Text.Encoding.UTF8.GetString(recieved);
 
             PlayerSnapshot responce = JsonUtility.FromJson<PlayerSnapshot>(json);
-            //snapshots.Enqueue(responce);
+            
+            updatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            previousSnapshot = snapshot;
             snapshot = responce;
             
             // Debug.Log("received from server: " + responce.position + ":" + responce.lastDatagramNumber);
@@ -72,7 +73,6 @@ public class NetworkManager : Singleton<NetworkManager>
         requests.Enqueue(request);
 
         string json = JsonUtility.ToJson(request).ToString();
-
 
         byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
         udpClient.Send(bytes, bytes.Length);
