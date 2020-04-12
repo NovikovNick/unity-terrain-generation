@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine;
+using System;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -36,33 +37,49 @@ public class PlayerMovement : MonoBehaviour
             float targetRotation = Mathf.Atan2(inputDir.x, inputDir.y) * Mathf.Rad2Deg + cameraT.eulerAngles.y;
             transform.eulerAngles = Vector3.up * Mathf.SmoothDampAngle(transform.eulerAngles.y, targetRotation, ref turnSmoothVelocity, turnSmoothTime);
         }
-
-        bool running = Input.GetKey(KeyCode.LeftShift);
-        float targetSpeed = ((running) ? runSpeed : walkSpeed) * inputDir.magnitude;
-
-        //transform.Translate(transform.forward * targetSpeed * Time.deltaTime, Space.World);
         
-        PlayerSnapshot snapshot;
-        if (NetworkManager.Instance.snapshots.TryDequeue(out snapshot))
+        bool running = Input.GetKey(KeyCode.LeftShift);
+        float timeDelta = Time.deltaTime;
+        NetworkManager.Instance.ChangePlayerPosition(transform.forward, inputDir.magnitude, timeDelta, running);
+
+        Vector3 position = transform.position + transform.forward * ((running) ? runSpeed : walkSpeed) * inputDir.magnitude * timeDelta;
+
+        animator.SetFloat("speedPercent", ((running) ? 1 : .5f) * inputDir.magnitude);
+
+
+        PlayerSnapshot snapshot = NetworkManager.Instance.snapshot;
+        if (snapshot != null)
         {
-            transform.position = snapshot.position;
+            Vector3 newPosition = new Vector3(snapshot.position.x, snapshot.position.y, snapshot.position.z);
 
             PlayerRequest request;
             if (NetworkManager.Instance.requests.TryPeek(out request))
             {
-                while (request.datagramNumber <= snapshot.lastDatagramNumber)
+                
+                while (request.datagramNumber < snapshot.lastDatagramNumber)
                 {
                     NetworkManager.Instance.requests.TryDequeue(out request);
+                    
                 }
+                
+                foreach (PlayerRequest r in new List<PlayerRequest>(NetworkManager.Instance.requests))
+                {
+                    float speed = ((r.isRunning) ? runSpeed : walkSpeed);
+                    float multiplier = round(speed * r.magnitude * r.timeDelta);
 
-                transform.Translate(request.direction * targetSpeed * 1 / 30, Space.World);
-                float animationSpeedPercent = ((running) ? 1 : .5f) * inputDir.magnitude;
-                animator.SetFloat("speedPercent", animationSpeedPercent);
+                    newPosition = new Vector3(
+                        newPosition.x + round(r.direction.x * multiplier), 
+                        newPosition.y + round(r.direction.y * multiplier), 
+                        newPosition.z + round(r.direction.z * multiplier)
+                        );
+                }
+                transform.position = newPosition;
             }
-
-            
         }
-        
-        NetworkManager.Instance.ChangePlayerPosition(transform.forward, inputDir.magnitude, running);
+    }
+
+    float round(float value)
+    {
+        return Mathf.Round(value * 10000) / 10000;
     }
 }

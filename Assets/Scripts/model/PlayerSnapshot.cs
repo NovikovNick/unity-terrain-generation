@@ -12,4 +12,10 @@ public class PlayerSnapshot
     public byte playerId;
     public Vector3 position;
     public Vector3 direction;
+
+
+    public override string ToString()
+    {
+        return "PlayerSnapshot: lastDatagramNumber=" + lastDatagramNumber + ", position=" +  position;
+    }
 }
