@@ -6,16 +6,17 @@ using UnityEngine;
 [System.Serializable]
 public class PlayerRequest
 {
-    public long timestamp;
+    public int sequenceNumber;
+    public int acknowledgmentNumber;
     public float timeDelta;
-    public int datagramNumber;
 
     public Vector3 direction;
     public bool isRunning;
     public float magnitude;
+    public Vector3 loadedChunck;
 
     public override string ToString()
     {
-        return "PlayerRequest: datagramNumber=" + datagramNumber + ", " + timeDelta.ToString() + ", " + direction.x.ToString() + "-" + direction.y.ToString() + "-" + direction.z.ToString();
+        return "PlayerRequest: sequenceNumber=" + sequenceNumber + "; acknowledgmentNumber=" + acknowledgmentNumber;
     }
 }

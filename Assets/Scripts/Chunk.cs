@@ -15,14 +15,11 @@ public class Chunk
     GameObject gameObject;
 
     float size = 0.5f;
-
-
-    public void Start(List<Vector3> data)
+    
+    public Chunk(Vector3 position, List<Vector3> data)
     {
-        Debug.Log("Started");
-        gameObject = new GameObject("Chunk");
-        //gameObject.transform.SetPositionAndRotation(position, Quaternion.identity);
-
+        gameObject = new GameObject("Chunk" + position);
+        gameObject.transform.position = new Vector3(-0.5f, -0.5f, -0.5f);
         gameObject.AddComponent<MeshFilter>();
         gameObject.AddComponent<MeshRenderer>();
         gameObject.AddComponent<MeshCollider>();
@@ -74,7 +71,7 @@ public class Chunk
         int i = 0;
         int triIndex = 0;
         foreach (Vector3 item in data)
-        {            
+        {
 
             Points.Add(new Vector3(item.x -size, item.y + size, item.z -size));
             Points.Add(new Vector3(item.x + size, item.y + size, item.z -size));
@@ -85,8 +82,6 @@ public class Chunk
             Points.Add(new Vector3(item.x -size, item.y + size, item.z + size));
             Points.Add(new Vector3(item.x -size, item.y -size, item.z + size));
             Points.Add(new Vector3(item.x + size, item.y  -size, item.z + size));
-            
-
 
             if (!data.Contains(item + directions["front"]))
             {
@@ -177,8 +172,7 @@ public class Chunk
         Verts.Clear();
         Tris.Clear();
         UVs.Clear();
-
-        //MeshCollider meshCollider = gameObject.GetComponent<MeshCollider>();
+        
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
         meshCollider.sharedMesh = null;
@@ -188,5 +182,4 @@ public class Chunk
         renderer.material = mat;
         mesh.Optimize();
     }
-    
 }

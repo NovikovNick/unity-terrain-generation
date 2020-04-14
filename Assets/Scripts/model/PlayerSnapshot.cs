@@ -7,13 +7,15 @@ using UnityEngine;
 public class PlayerSnapshot
 {
     public long timestamp;
-    public int lastDatagramNumber;
+    public int sequenceNumber;
+    public int acknowledgmentNumber;
 
     public ServerGameObject player;
     public List<ServerGameObject> otherPlayers;
+    public List<TerrainChunk> terrainChunks; 
 
     public override string ToString()
     {
-        return "PlayerSnapshot: lastDatagramNumber=" + lastDatagramNumber;
+        return "PlayerSnapshot: sequenceNumber=" + sequenceNumber + "; acknowledgmentNumber=" + acknowledgmentNumber;
     }
 }

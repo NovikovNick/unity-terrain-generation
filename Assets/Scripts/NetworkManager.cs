@@ -17,7 +17,7 @@ public class NetworkManager : Singleton<NetworkManager>
     UdpClient udpClient;
     IPEndPoint hostEndPoint;
 
-    int datagramNumber = 0;
+    int sequenceNumber = 0;
     public long updatedAt;
     public PlayerSnapshot previousSnapshot;
     public PlayerSnapshot snapshot;
@@ -33,7 +33,6 @@ public class NetworkManager : Singleton<NetworkManager>
         udpClient.Client.Blocking = false;
         udpClient.Client.ReceiveTimeout = 1000;
         udpClient.BeginReceive(new AsyncCallback(processDgram), udpClient);
-        
     }
     
 
@@ -50,8 +49,8 @@ public class NetworkManager : Singleton<NetworkManager>
             updatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             previousSnapshot = snapshot;
             snapshot = responce;
-            
-            // Debug.Log("received from server: " + responce.position + ":" + responce.lastDatagramNumber);
+
+            Debug.Log("received: " + responce);
             udpClient.BeginReceive(new AsyncCallback(processDgram), udpClient);
         }
         catch (Exception ex)
@@ -63,8 +62,13 @@ public class NetworkManager : Singleton<NetworkManager>
     public void ChangePlayerPosition(Vector3 direction, float magnitude, float timeDelta, bool isRunning)
     {
         PlayerRequest request = new PlayerRequest();
-        request.timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        request.datagramNumber = datagramNumber++;
+        request.sequenceNumber = sequenceNumber++;
+        if (snapshot != null)
+        {
+            request.acknowledgmentNumber = snapshot.sequenceNumber;
+        }
+            
+
         request.magnitude = round(magnitude);
         request.timeDelta = round(timeDelta);
         request.direction = new Vector3(round(direction.x), round(direction.y), round(direction.z));
@@ -77,7 +81,7 @@ public class NetworkManager : Singleton<NetworkManager>
         byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
         udpClient.Send(bytes, bytes.Length);
 
-        // Debug.Log("sent to server: " + json);
+        Debug.Log("sent: " + request);
     }
 
     float round(float value)

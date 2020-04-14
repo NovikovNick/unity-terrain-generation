@@ -28,7 +28,6 @@ public class PlayerMovement : MonoBehaviour
         cameraT = Camera.main.transform;
 
         capsule = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-
     }
 
     void Update()
@@ -51,7 +50,7 @@ public class PlayerMovement : MonoBehaviour
 
         animator.SetFloat("speedPercent", ((running) ? 1 : .5f) * inputDir.magnitude);
 
-
+       
         PlayerSnapshot snapshot = NetworkManager.Instance.snapshot;
         if (snapshot != null)
         {
@@ -62,10 +61,9 @@ public class PlayerMovement : MonoBehaviour
             if (NetworkManager.Instance.requests.TryPeek(out request))
             {
                 
-                while (request.datagramNumber < snapshot.lastDatagramNumber)
+                while (request.sequenceNumber < snapshot.acknowledgmentNumber)
                 {
                     NetworkManager.Instance.requests.TryDequeue(out request);
-                    
                 }
 
                 foreach (PlayerRequest r in new List<PlayerRequest>(NetworkManager.Instance.requests))
@@ -89,11 +87,19 @@ public class PlayerMovement : MonoBehaviour
                 float interval = snapshot.timestamp - previousSnapshot.timestamp;
                 float elapsed  = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - NetworkManager.Instance.updatedAt;
                 float t = elapsed / interval;
-
+                
                 Vector3 pos = Vector3.Lerp(previousSnapshot.otherPlayers[0].position, snapshot.otherPlayers[0].position, t);
                 capsule.transform.position = pos;
             }
-            
+
+            // terrain
+
+            foreach (TerrainChunk chunk in new List<TerrainChunk>(NetworkManager.Instance.snapshot.terrainChunks))
+            {
+                TerrainManager.Instance.updateChunk(chunk);
+            }
+
+
         }
     }
 

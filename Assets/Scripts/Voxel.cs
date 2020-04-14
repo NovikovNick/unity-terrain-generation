@@ -34,7 +34,6 @@ public class Voxel
         Points.Add(new Vector3(-size, -size, size));
         Points.Add(new Vector3(size, -size, size));
 
-
         Verts = new List<Vector3>();
         Tris = new List<int>();
         UVs = new List<Vector2>();
