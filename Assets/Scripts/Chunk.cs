@@ -12,7 +12,7 @@ public class Chunk
 
     List<int> Tris;
     List<Vector2> UVs;
-    GameObject gameObject;
+    public GameObject gameObject;
 
     float size = 0.5f;
     

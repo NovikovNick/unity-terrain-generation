@@ -8,14 +8,20 @@ public class TerrainManager : Singleton<TerrainManager>
 
     public void updateChunk(TerrainChunk chunk)
     {
-        if(!map.ContainsKey(chunk.position)) {
-            List<Vector3> data = new List<Vector3>();
-            foreach (Vector3 voxel in chunk.children)
-            {
-                data.Add(new Vector3(voxel.x + 10 * chunk.position.x, voxel.y + 10 * chunk.position.y, voxel.z + 10 * chunk.position.z));
-            }
-            Chunk ch = new Chunk(chunk.position, data);
-            map.Add(chunk.position, ch);
+        Debug.Log("create " + chunk.position);
+        if (map.ContainsKey(chunk.position)) {
+            Debug.Log("remove " + chunk.position);
+            Destroy(map[chunk.position].gameObject);
+            map.Remove(chunk.position);
+        } 
+
+        List<Vector3> data = new List<Vector3>();
+
+        foreach (Vector3 voxel in chunk.children)
+        {
+            data.Add(new Vector3(voxel.x + 10 * chunk.position.x, voxel.y + 10 * chunk.position.y, voxel.z + 10 * chunk.position.z));
         }
+        Chunk ch = new Chunk(chunk.position, data);
+        map.Add(chunk.position, ch);
     }
 }

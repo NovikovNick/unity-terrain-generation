@@ -50,7 +50,7 @@ public class NetworkManager : Singleton<NetworkManager>
             previousSnapshot = snapshot;
             snapshot = responce;
 
-            Debug.Log("received: " + responce);
+            // Debug.Log("received: " + responce.terrainChunks.Count);
             udpClient.BeginReceive(new AsyncCallback(processDgram), udpClient);
         }
         catch (Exception ex)
@@ -63,11 +63,11 @@ public class NetworkManager : Singleton<NetworkManager>
     {
         PlayerRequest request = new PlayerRequest();
         request.sequenceNumber = sequenceNumber++;
-        if (snapshot != null)
+        if(snapshot != null)
         {
             request.acknowledgmentNumber = snapshot.sequenceNumber;
         }
-            
+
 
         request.magnitude = round(magnitude);
         request.timeDelta = round(timeDelta);
@@ -81,7 +81,7 @@ public class NetworkManager : Singleton<NetworkManager>
         byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
         udpClient.Send(bytes, bytes.Length);
 
-        Debug.Log("sent: " + request);
+        // Debug.Log("sent: " + request);
     }
 
     float round(float value)

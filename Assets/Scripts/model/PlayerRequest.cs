@@ -13,7 +13,6 @@ public class PlayerRequest
     public Vector3 direction;
     public bool isRunning;
     public float magnitude;
-    public Vector3 loadedChunck;
 
     public override string ToString()
     {

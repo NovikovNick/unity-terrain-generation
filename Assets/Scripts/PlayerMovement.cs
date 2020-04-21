@@ -93,7 +93,6 @@ public class PlayerMovement : MonoBehaviour
             }
 
             // terrain
-
             foreach (TerrainChunk chunk in new List<TerrainChunk>(NetworkManager.Instance.snapshot.terrainChunks))
             {
                 TerrainManager.Instance.updateChunk(chunk);
