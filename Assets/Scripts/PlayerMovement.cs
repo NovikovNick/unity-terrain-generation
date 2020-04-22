@@ -7,46 +7,70 @@ using System;
 public class PlayerMovement : MonoBehaviour
 {
 
+    #region Camera
+
+    public bool lockCursor;
+    public float mouseSensitivity = 10;
+    public float dstFromTarget = 2;
+    public Vector2 pitchMinMax = new Vector2(-40, 85);
+
+    float yaw;
+    float pitch;
+
+    public float rotationSmoothTime = .12f;
+    Vector3 rotationSmoothVelocity;
+    Vector3 currentRotation;
+    #endregion
+
+    Transform cameraT;
+    GameObject player;
+    Dictionary<int, Transform> otherPlayers = new Dictionary<int, Transform>();
+
+    public GameObject characterPrefab;
     public float walkSpeed = 2;
     public float runSpeed = 6;
-
     public float turnSmoothTime = 0.2f;
-    float turnSmoothVelocity;
-
     public float speedSmoothTime = 0.1f;
+
+    float turnSmoothVelocity;
     float speedSmoothVelocity;
     float currentSpeed;
 
-    Animator animator;
-    Transform cameraT;
 
-    GameObject capsule;
+    Animator animator;
 
     void Start()
     {
-        animator = GetComponent<Animator>();
+        if (lockCursor)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+
+        player = Instantiate(characterPrefab, new Vector3(0,0,0), Quaternion.identity);
+        animator = player.GetComponent<Animator>();
         cameraT = Camera.main.transform;
 
-        capsule = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+       
     }
 
     void Update()
     {
-
+        
         Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
         Vector2 inputDir = input.normalized;
 
         if (inputDir != Vector2.zero)
         {
             float targetRotation = Mathf.Atan2(inputDir.x, inputDir.y) * Mathf.Rad2Deg + cameraT.eulerAngles.y;
-            transform.eulerAngles = Vector3.up * Mathf.SmoothDampAngle(transform.eulerAngles.y, targetRotation, ref turnSmoothVelocity, turnSmoothTime);
+            player.transform.eulerAngles = Vector3.up * Mathf.SmoothDampAngle(player.transform.eulerAngles.y, targetRotation, ref turnSmoothVelocity, turnSmoothTime);
         }
         
         bool running = Input.GetKey(KeyCode.LeftShift);
         float timeDelta = Time.deltaTime;
-        NetworkManager.Instance.ChangePlayerPosition(transform.forward, inputDir.magnitude, timeDelta, running);
+        NetworkManager.Instance.ChangePlayerPosition(player.transform.forward, inputDir.magnitude, timeDelta, running);
 
-        Vector3 position = transform.position + transform.forward * ((running) ? runSpeed : walkSpeed) * inputDir.magnitude * timeDelta;
+        Vector3 position = player.transform.position + player.transform.forward * ((running) ? runSpeed : walkSpeed) * inputDir.magnitude * timeDelta;
 
         animator.SetFloat("speedPercent", ((running) ? 1 : .5f) * inputDir.magnitude);
 
@@ -77,7 +101,7 @@ public class PlayerMovement : MonoBehaviour
                         newPosition.z + round(r.direction.z * multiplier)
                         );
                 }
-                transform.position = newPosition;
+                player.transform.position = newPosition;
             }
 
             // other players
@@ -88,17 +112,37 @@ public class PlayerMovement : MonoBehaviour
                 float elapsed  = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - NetworkManager.Instance.updatedAt;
                 float t = elapsed / interval;
                 
-                Vector3 pos = Vector3.Lerp(previousSnapshot.otherPlayers[0].position, snapshot.otherPlayers[0].position, t);
-                capsule.transform.position = pos;
+                for(int i = 0; i < snapshot.otherPlayers.Count; i++)
+                {
+                    if(!otherPlayers.ContainsKey(i))
+                    {
+                        otherPlayers.Add(i, Instantiate(characterPrefab, previousSnapshot.otherPlayers[i].position, Quaternion.identity).GetComponent<Transform>());
+                    }
+                    Vector3 pos = Vector3.Lerp(previousSnapshot.otherPlayers[i].position, snapshot.otherPlayers[i].position, t);
+                    otherPlayers[i].transform.position = pos;
+
+                    otherPlayers[i].transform.LookAt(pos + snapshot.otherPlayers[i].rotation, Vector3.up);
+                    Debug.Log("direction "+snapshot.otherPlayers[i].rotation);
+                }
             }
+
+            // camera
+            yaw += Input.GetAxis("Mouse X") * mouseSensitivity;
+            pitch -= Input.GetAxis("Mouse Y") * mouseSensitivity;
+            pitch = Mathf.Clamp(pitch, pitchMinMax.x, pitchMinMax.y);
+
+
+            Vector3 targetRotation = new Vector3(pitch, yaw);
+            currentRotation = Vector3.SmoothDamp(currentRotation, targetRotation, ref rotationSmoothVelocity, rotationSmoothTime);
+            cameraT.transform.eulerAngles = currentRotation;
+
+            cameraT.transform.position = player.transform.position + new Vector3(0, 1.8f, 0) - cameraT.transform.forward * dstFromTarget;
 
             // terrain
             foreach (TerrainChunk chunk in new List<TerrainChunk>(NetworkManager.Instance.snapshot.terrainChunks))
             {
                 TerrainManager.Instance.updateChunk(chunk);
             }
-
-
         }
     }
 

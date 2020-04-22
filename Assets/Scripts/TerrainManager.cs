@@ -8,9 +8,9 @@ public class TerrainManager : Singleton<TerrainManager>
 
     public void updateChunk(TerrainChunk chunk)
     {
-        Debug.Log("create " + chunk.position);
+        // Debug.Log("create " + chunk.position);
         if (map.ContainsKey(chunk.position)) {
-            Debug.Log("remove " + chunk.position);
+            // Debug.Log("remove " + chunk.position);
             Destroy(map[chunk.position].gameObject);
             map.Remove(chunk.position);
         } 

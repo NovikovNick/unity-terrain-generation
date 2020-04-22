@@ -6,7 +6,7 @@ using UnityEngine;
 public class ServerGameObject
 {
     public Vector3 position;
-    public Vector3 direction;
+    public Vector3 rotation;
 
     public override string ToString()
     {
