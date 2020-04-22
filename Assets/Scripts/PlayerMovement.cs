@@ -120,9 +120,16 @@ public class PlayerMovement : MonoBehaviour
                     }
                     Vector3 pos = Vector3.Lerp(previousSnapshot.otherPlayers[i].position, snapshot.otherPlayers[i].position, t);
                     otherPlayers[i].transform.position = pos;
-
                     otherPlayers[i].transform.LookAt(pos + snapshot.otherPlayers[i].rotation, Vector3.up);
-                    Debug.Log("direction "+snapshot.otherPlayers[i].rotation);
+
+                    if (snapshot.otherPlayers[i].speed > 0)
+                    {
+                        otherPlayers[i].transform.GetComponent<Animator>().SetFloat("speedPercent", ((snapshot.otherPlayers[i].speed > 3) ? 1 : .5f));
+                    }
+                    else
+                    {
+                        otherPlayers[i].transform.GetComponent<Animator>().SetFloat("speedPercent", 0);
+                    }
                 }
             }
 

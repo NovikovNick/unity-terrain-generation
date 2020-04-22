@@ -11,7 +11,7 @@ public class PlayerSnapshot
     public int acknowledgmentNumber;
 
     public ServerGameObject player;
-    public List<ServerGameObject> otherPlayers;
+    public List<Player> otherPlayers;
     public List<TerrainChunk> terrainChunks; 
 
     public override string ToString()
