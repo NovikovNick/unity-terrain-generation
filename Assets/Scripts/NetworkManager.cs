@@ -49,8 +49,7 @@ public class NetworkManager : Singleton<NetworkManager>
             updatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             previousSnapshot = snapshot;
             snapshot = responce;
-
-            // Debug.Log("received: " + responce.terrainChunks.Count);
+            
             udpClient.BeginReceive(new AsyncCallback(processDgram), udpClient);
         }
         catch (Exception ex)

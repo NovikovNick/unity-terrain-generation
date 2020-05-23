@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+  <ui:VisualElement name="screen" class="screen">
+    <Style src="menu.uss" />
+    <ui:VisualElement name="menu-column" class="menu-column">
+      <ui:VisualElement name="menu" class="menu-window">
+        <ui:Button text="Подключиться " name="start-button" class="menu-button" />
+        <ui:Button text="Выйти" name="exit-button" class="menu-button" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

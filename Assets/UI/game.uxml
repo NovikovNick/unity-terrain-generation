@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+  <ui:VisualElement name="game-screen" class="game-screen">
+    <Style src="menu.uss" />
+    <ui:VisualElement name="game-column" class="game-column">
+      <ui:VisualElement name="menu" class="menu-window">
+        <ui:Button text="Назад " name="back-button" class="menu-button" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>

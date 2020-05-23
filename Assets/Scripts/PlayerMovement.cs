@@ -49,78 +49,10 @@ public class PlayerMovement : MonoBehaviour
 
     Animator animator;
     Rigidbody rb;
-
-    #region UI
-    public PanelRenderer menuScreen;
-    #endregion
-
-    private void OnEnable()
-    {
-        Debug.Log("OnEnable");
-        // UI 
-        menuScreen.postUxmlReload = BindMainMenuScreen;
-
-    }
-    private void GoToMainMenu()
-    {
-        SetScreenEnableState(menuScreen, true);
-        //SetScreenEnableState(m_GameScreen, false);
-        //SetScreenEnableState(m_EndScreen, false);
-    }
-
-    void SetScreenEnableState(PanelRenderer screen, bool state)
-    {
-        if (state)
-        {
-            screen.visualTree.style.display = DisplayStyle.Flex;
-            screen.enabled = true;
-            screen.gameObject.GetComponent<UIElementsEventSystem>().enabled = true;
-            BindMainMenuScreen();
-        }
-        else
-        {
-            screen.visualTree.style.display = DisplayStyle.None;
-            screen.enabled = false;
-            screen.gameObject.GetComponent<UIElementsEventSystem>().enabled = false;
-        }
-    }
-
-    private IEnumerable<Object> BindMainMenuScreen()
-    {
-        Debug.Log("BindMainMenuScreen");
-        var root = menuScreen.visualTree;
-
-        var startButton = root.Q<Button>("start-button");
-        if (startButton != null)
-        {
-            startButton.clickable.clicked += () =>
-            {
-                StartRound();
-            };
-        }
-
-        var exitButton = root.Q<Button>("exit-button");
-        if (exitButton != null)
-        {
-            exitButton.clickable.clicked += () =>
-            {
-                Application.Quit();
-            };
-        }
-
-        return null;
-    }
-
-    private void StartRound()
-    {
-        SceneManager.LoadScene(1);
-        Debug.Log("it works...");
-    }
+    
 
     void Start()
     {
-       
-        GoToMainMenu();
 
         if (lockCursor)
         {
