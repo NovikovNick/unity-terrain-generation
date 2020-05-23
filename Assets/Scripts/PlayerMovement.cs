@@ -1,8 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.UI;
 using UnityEngine;
 using System;
+
+using Unity.UIElements.Runtime;
+using UnityEngine.SceneManagement;
+using UnityEngine.UIElements;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -22,6 +27,11 @@ public class PlayerMovement : MonoBehaviour
     Vector3 currentRotation;
     #endregion
 
+    #region Laser
+    public LineRenderer lineRenderer;
+    #endregion
+
+
     Transform cameraT;
     GameObject player;
     Dictionary<int, Transform> otherPlayers = new Dictionary<int, Transform>();
@@ -38,71 +48,143 @@ public class PlayerMovement : MonoBehaviour
 
 
     Animator animator;
+    Rigidbody rb;
+
+    #region UI
+    public PanelRenderer menuScreen;
+    #endregion
+
+    private void OnEnable()
+    {
+        Debug.Log("OnEnable");
+        // UI 
+        menuScreen.postUxmlReload = BindMainMenuScreen;
+
+    }
+    private void GoToMainMenu()
+    {
+        SetScreenEnableState(menuScreen, true);
+        //SetScreenEnableState(m_GameScreen, false);
+        //SetScreenEnableState(m_EndScreen, false);
+    }
+
+    void SetScreenEnableState(PanelRenderer screen, bool state)
+    {
+        if (state)
+        {
+            screen.visualTree.style.display = DisplayStyle.Flex;
+            screen.enabled = true;
+            screen.gameObject.GetComponent<UIElementsEventSystem>().enabled = true;
+            BindMainMenuScreen();
+        }
+        else
+        {
+            screen.visualTree.style.display = DisplayStyle.None;
+            screen.enabled = false;
+            screen.gameObject.GetComponent<UIElementsEventSystem>().enabled = false;
+        }
+    }
+
+    private IEnumerable<Object> BindMainMenuScreen()
+    {
+        Debug.Log("BindMainMenuScreen");
+        var root = menuScreen.visualTree;
+
+        var startButton = root.Q<Button>("start-button");
+        if (startButton != null)
+        {
+            startButton.clickable.clicked += () =>
+            {
+                StartRound();
+            };
+        }
+
+        var exitButton = root.Q<Button>("exit-button");
+        if (exitButton != null)
+        {
+            exitButton.clickable.clicked += () =>
+            {
+                Application.Quit();
+            };
+        }
+
+        return null;
+    }
+
+    private void StartRound()
+    {
+        SceneManager.LoadScene(1);
+        Debug.Log("it works...");
+    }
 
     void Start()
     {
+       
+        GoToMainMenu();
+
         if (lockCursor)
         {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+           // Cursor.lockState = CursorLockMode.Locked;
+          //  Cursor.visible = false;
         }
 
         player = Instantiate(characterPrefab, new Vector3(0,0,0), Quaternion.identity);
         animator = player.GetComponent<Animator>();
+        rb = player.GetComponent<Rigidbody>();
         cameraT = Camera.main.transform;
-
-       
     }
 
     void Update()
     {
-        
+        /*
+        RaycastHit hit;
+
+        if (Physics.Raycast(player.transform.position, player.transform.forward, out hit))
+        {
+            // hit.point
+            lineRenderer.SetPosition(0, player.transform.position + new Vector3(0, 1.7f, 0));
+            lineRenderer.SetPosition(1, hit.point + new Vector3(0, 1.7f, 0));
+        } else
+        {
+            lineRenderer.SetPosition(0, player.transform.position + new Vector3(0, 1.7f, 0));
+            lineRenderer.SetPosition(1, player.transform.position + new Vector3(0, 1.7f, 0) + player.transform.forward * 2) ;
+        }
+        */
+
+        /*
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+           
+            lineRenderer.enabled = true;
+        }
+        else
+        {
+            lineRenderer.enabled = false;
+        }
+        */
+
+
         Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
         Vector2 inputDir = input.normalized;
+        Vector3 euler = player.transform.eulerAngles;
 
         if (inputDir != Vector2.zero)
         {
             float targetRotation = Mathf.Atan2(inputDir.x, inputDir.y) * Mathf.Rad2Deg + cameraT.eulerAngles.y;
-            player.transform.eulerAngles = Vector3.up * Mathf.SmoothDampAngle(player.transform.eulerAngles.y, targetRotation, ref turnSmoothVelocity, turnSmoothTime);
+            euler = Vector3.up * Mathf.SmoothDampAngle(player.transform.eulerAngles.y, targetRotation, ref turnSmoothVelocity, turnSmoothTime);
         }
         
         bool running = Input.GetKey(KeyCode.LeftShift);
         float timeDelta = Time.deltaTime;
         NetworkManager.Instance.ChangePlayerPosition(player.transform.forward, inputDir.magnitude, timeDelta, running);
-
-        Vector3 position = player.transform.position + player.transform.forward * ((running) ? runSpeed : walkSpeed) * inputDir.magnitude * timeDelta;
-
+        
         animator.SetFloat("speedPercent", ((running) ? 1 : .5f) * inputDir.magnitude);
 
        
         PlayerSnapshot snapshot = NetworkManager.Instance.snapshot;
         if (snapshot != null)
         {
-            // Client-side prediction
-
-            Vector3 newPosition = new Vector3(snapshot.player.position.x, snapshot.player.position.y, snapshot.player.position.z);
-            PlayerRequest request;
-            if (NetworkManager.Instance.requests.TryPeek(out request))
-            {
-                
-                while (request.sequenceNumber < snapshot.acknowledgmentNumber)
-                {
-                    NetworkManager.Instance.requests.TryDequeue(out request);
-                }
-
-                foreach (PlayerRequest r in new List<PlayerRequest>(NetworkManager.Instance.requests))
-                {
-                    float speed = ((r.isRunning) ? runSpeed : walkSpeed);
-                    float multiplier = round(speed * r.magnitude * r.timeDelta);
-
-                    newPosition = new Vector3(
-                        newPosition.x + round(r.direction.x * multiplier), 
-                        newPosition.y + round(r.direction.y * multiplier), 
-                        newPosition.z + round(r.direction.z * multiplier)
-                        );
-                }
-                player.transform.position = newPosition;
-            }
+            
 
             // other players
             PlayerSnapshot previousSnapshot = NetworkManager.Instance.previousSnapshot;
@@ -153,8 +235,63 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    float round(float value)
+    private void FixedUpdate()
     {
-        return Mathf.Round(value * 10000) / 10000;
+        PlayerSnapshot snapshot = NetworkManager.Instance.snapshot;
+        if (snapshot != null)
+        {
+            // rotation
+
+            Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+            Vector2 inputDir = input.normalized;
+            Vector3 euler = player.transform.eulerAngles;
+
+            if (inputDir != Vector2.zero)
+            {
+                float targetRotation = Mathf.Atan2(inputDir.x, inputDir.y) * Mathf.Rad2Deg + cameraT.eulerAngles.y;
+                euler = Vector3.up * Mathf.SmoothDampAngle(player.transform.eulerAngles.y, targetRotation, ref turnSmoothVelocity, turnSmoothTime);
+            }
+
+
+            // Client-side prediction
+            
+            rb.position = snapshot.player.position;
+
+            Vector3 newPosition = new Vector3(0,0,0);
+            PlayerRequest request;
+            if (NetworkManager.Instance.requests.TryPeek(out request))
+            {
+
+                while (request.sequenceNumber < snapshot.acknowledgmentNumber)
+                {
+                    NetworkManager.Instance.requests.TryDequeue(out request);
+                }
+                float speed = 0;
+                float magnitude = 0;
+                float timeDelta = 0;
+                Vector3 direction = new Vector3(0,0,0);
+
+                foreach (PlayerRequest r in new List<PlayerRequest>(NetworkManager.Instance.requests))
+                {
+                    speed = ((r.isRunning) ? runSpeed : walkSpeed);
+                    magnitude = r.magnitude;
+                    timeDelta += r.timeDelta;
+                    direction = r.direction;
+                    newPosition = rb.position + r.direction * speed * r.magnitude * r.timeDelta;
+                    
+                    Ray ray = new Ray(rb.position + new Vector3(0, 1.7f, 0), r.direction);
+                    RaycastHit hit;
+                    if (!Physics.Raycast(ray, out hit, 0.5f + speed * r.magnitude * r.timeDelta))
+                    {
+                        lineRenderer.enabled = false;
+
+                        rb.MovePosition(newPosition);
+                       
+                    } 
+                }
+                
+                rb.MoveRotation(Quaternion.Euler(euler));
+            }
+        }
     }
 }

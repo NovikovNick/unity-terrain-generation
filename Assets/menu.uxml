@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:Button text="CONNECT" name="start-button" class="button">
+        <Style src="menu.uss" />
+    </ui:Button>
+    <ui:Button text="DISCONNECT" name="exit-button" class="button">
+        <Style src="menu.uss" />
+    </ui:Button>
+</ui:UXML>

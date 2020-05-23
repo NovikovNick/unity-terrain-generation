@@ -69,9 +69,9 @@ public class NetworkManager : Singleton<NetworkManager>
         }
 
 
-        request.magnitude = round(magnitude);
-        request.timeDelta = round(timeDelta);
-        request.direction = new Vector3(round(direction.x), round(direction.y), round(direction.z));
+        request.magnitude = magnitude;
+        request.timeDelta = timeDelta;
+        request.direction = direction;
         request.isRunning = isRunning;
 
         requests.Enqueue(request);
@@ -82,10 +82,5 @@ public class NetworkManager : Singleton<NetworkManager>
         udpClient.Send(bytes, bytes.Length);
 
         // Debug.Log("sent: " + request);
-    }
-
-    float round(float value)
-    {
-        return Mathf.Round(value * 10000) / 10000;
     }
 }
